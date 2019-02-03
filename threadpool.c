@@ -1,33 +1,5 @@
 #include "threadpool.h"
 
-// Testing
-int func(void* toPrint1)
-{
-	int* toPrint = (int*)toPrint1;
-	printf("Thread %lu Prints --> %d\n",pthread_self(), *toPrint+1);
-	return EXIT_SUCCESS;
-}
-
-
-int main(int argc, char const *argv[])
-{
-	printf("EXIT_SUCCESS: %d\nEXIT_FAILURE: %d\n", EXIT_SUCCESS,EXIT_FAILURE);
-	printf("Main thread id is: %lu\n", pthread_self());
-	int jobs = atoi(argv[1]);
-	int threads = atoi(argv[2]);
-	int* arr = (int*)malloc(jobs*sizeof(int));
-	for (int i = 0; i < jobs; i++)
-		arr[i] = i;
-
-	threadpool* tp = create_threadpool(threads);
-	for (int i = 0; i < jobs; i++)
-		dispatch(tp, func, &arr[i]);
-
-	destroy_threadpool(tp);
-	free(arr);
-	return 1;
-}
-
 
 threadpool* create_threadpool(int num_threads_in_pool)
 {
@@ -94,10 +66,7 @@ void* do_work(void* p)
 	while(1)
 	{
 		if(pool->shutdown == 1)
-		{
-			printf("thread: %lu is exiting!!!\n", pthread_self());
 			return NULL;
-		}
 
 		pthread_mutex_lock(&pool->qlock);
 		if(pool->qsize == 0)
@@ -106,7 +75,7 @@ void* do_work(void* p)
 			if(pool->shutdown == 1)
 			{
 				pthread_mutex_unlock(&pool->qlock);
-				pthread_exit(NULL);
+				return NULL;
 			}
 		}
 		work_t* temp = dequeueJob(pool);
